@@ -1,0 +1,7 @@
+name: traQraft
+version: '1.0'
+main: jp.trap.traQraft.TraQraft
+api-version: '1.21'
+authors: [ TwoSquirrels ]
+description: connect Minecraft with traQ
+website: https://github.com/traP-jp/traQraft
