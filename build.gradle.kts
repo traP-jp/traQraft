@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.plugin.getKotlinPluginVersion
+
 plugins {
     kotlin("jvm") version "2.1.20"
     id("com.gradleup.shadow") version "8.3.0"
@@ -6,6 +8,11 @@ plugins {
 
 group = "jp.trap"
 version = "1.0"
+description = "connect Minecraft with traQ"
+
+val apiVersion = "1.21.4"
+val author = "TwoSquirrels"
+val website = "https://github.com/traP-jp/traQraft"
 
 repositories {
     mavenCentral()
@@ -24,10 +31,7 @@ dependencies {
 
 tasks {
     runServer {
-        // Configure the Minecraft version for our task.
-        // This is the only required configuration besides applying the plugin.
-        // Your plugin's jar (or shadowJar if present) will be used automatically.
-        minecraftVersion("1.21")
+        minecraftVersion(apiVersion)
     }
 }
 
@@ -41,7 +45,14 @@ tasks.build {
 }
 
 tasks.processResources {
-    val props = mapOf("version" to version)
+    val props = mapOf(
+        "version" to version,
+        "apiVersion" to apiVersion,
+        "author" to author,
+        "description" to description,
+        "website" to website,
+        "kotlinVersion" to getKotlinPluginVersion()
+    )
     inputs.properties(props)
     filteringCharset = "UTF-8"
     filesMatching("plugin.yml") {

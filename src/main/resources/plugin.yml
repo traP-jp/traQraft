@@ -1,7 +1,9 @@
 name: traQraft
-version: '1.0'
+version: ${version}
 main: jp.trap.traQraft.TraQraft
-api-version: '1.21'
-authors: [ TwoSquirrels ]
-description: connect Minecraft with traQ
-website: https://github.com/traP-jp/traQraft
+api-version: ${apiVersion}
+author: ${author}
+description: ${description}
+website: ${website}
+libraries:
+  - org.jetbrains.kotlin:kotlin-stdlib:${kotlinVersion}
