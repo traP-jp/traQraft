@@ -2,6 +2,7 @@ import org.jetbrains.kotlin.gradle.plugin.getKotlinPluginVersion
 
 plugins {
     kotlin("jvm") version "2.1.20"
+    kotlin("plugin.serialization") version "2.1.20"
     id("com.gradleup.shadow") version "8.3.0"
     id("xyz.jpenilla.run-paper") version "2.3.1"
 }
@@ -27,6 +28,8 @@ repositories {
 dependencies {
     compileOnly("io.papermc.paper:paper-api:1.21.4-R0.1-SNAPSHOT")
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
+    implementation("com.akuleshov7:ktoml-core:0.6.0")
+    implementation("com.akuleshov7:ktoml-file:0.6.0")
 }
 
 tasks {

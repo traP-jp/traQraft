@@ -1,19 +1,28 @@
 package jp.trap.traQraft
 
+import org.bukkit.Bukkit
 import org.bukkit.plugin.java.JavaPlugin
 
 @Suppress("unused")
 class TraQraft : JavaPlugin() {
+    private lateinit var listener: TraQraftListener
+    lateinit var accountsManager: AccountsManager
+        private set
 
     override fun onLoad() {
-        logger.info("Hello, traQraft!")
+        logger.info("Loading traQraft...")
+        accountsManager = AccountsManager()
+        listener = TraQraftListener(this)
+        saveDefaultConfig()
     }
 
     override fun onEnable() {
-        // Plugin startup logic
+        Bukkit.setWhitelist(true)
+        Bukkit.getPluginManager().registerEvents(listener, this)
+        logger.info("traQraft Enabled!")
     }
 
     override fun onDisable() {
-        // Plugin shutdown logic
+        logger.info("traQraft Disabled!")
     }
 }
