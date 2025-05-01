@@ -1,0 +1,7 @@
+traQ:
+  port: 30001
+  verificationToken: ""
+  botAccessToken: ""
+  channelIds:
+    link: ""
+    chat: ""
