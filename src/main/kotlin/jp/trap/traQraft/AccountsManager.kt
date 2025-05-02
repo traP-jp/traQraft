@@ -3,15 +3,33 @@ package jp.trap.traQraft
 import org.bukkit.OfflinePlayer
 import java.util.*
 
+val hira = listOf(
+    'あ', 'い', 'う', 'え', 'お',
+    'か', 'き', 'く', 'け', 'こ',
+    'さ', 'し', 'す', 'せ', 'そ',
+    'た', 'ち', 'つ', 'て', 'と',
+    'な', 'に', 'ぬ', 'ね', 'の',
+    'は', 'ひ', 'ふ', 'へ', 'ほ',
+    'ま', 'み', 'む', 'め', 'も',
+    'や', 'ゆ', 'よ',
+    'ら', 'り', 'る', 'れ', 'ろ',
+    'わ', 'を',
+)
+
 class AccountsManager {
-    data class Account(val player: OfflinePlayer, val traQID: String? = null) {
-        var token: Int? = null
+    private data class Account(val player: OfflinePlayer, var traQUuid: String? = null) {
+        var token: List<Char>? = null
             private set
         private var tokenExpired: Long = 0
 
-        fun setToken(token: Int, lifetime: Long = 1000L * 60 * 5) {
+        fun setToken(token: List<Char>, lifetime: Long = 1000L * 60 * 5) {
             this.token = token
             this.tokenExpired = System.currentTimeMillis() + lifetime
+        }
+
+        fun clearToken() {
+            token = null
+            tokenExpired = 0
         }
 
         fun isTokenExpired(): Boolean {
@@ -20,9 +38,10 @@ class AccountsManager {
     }
 
     private val accounts = mutableMapOf<UUID, Account>()
-    private val tokens = mutableMapOf<Int, Account>()
+    private val tokens = mutableMapOf<List<Char>, Account>()
 
     init {
+        // expired tokens cleaner
         Timer().scheduleAtFixedRate(object : TimerTask() {
             override fun run() {
                 tokens.entries.removeIf { (_, account) -> account.isTokenExpired() }
@@ -32,21 +51,50 @@ class AccountsManager {
 
     fun createToken(player: OfflinePlayer): Result<String> {
         val account = accounts.getOrPut(player.uniqueId) { Account(player) }
-        account.token?.let {
-            tokens.remove(it)
-        }
+        account.token?.let { tokens.remove(it) }
 
+        // prevent unintended linking with incorrect tokens, or prevent tokens from overflowing
         if (tokens.size >= 1000) {
             return Result.failure(IllegalStateException("Token limit reached"))
         }
 
-        var token: Int
+        // generate a new unique token
+        var token: List<Char>
         do {
-            token = (0..9999).random()
+            // use hiragana to avoid notation inconsistency
+            token = List(3) { hira.random() } // 45^3 = 91125 patterns
         } while (tokens.containsKey(token))
         account.setToken(token)
         tokens[token] = account
 
-        return Result.success(token.toString().padStart(4, '0'))
+        return Result.success(token.joinToString(""))
+    }
+
+    fun link(traQUuid: String, tokenText: String): Result<OfflinePlayer> {
+        val token: List<Char> = tokenText.filter { it in hira }.toList()
+        tokens[token]?.let { account ->
+            if (account.isTokenExpired()) {
+                return Result.failure(IllegalStateException("Token expired"))
+            }
+
+            tokens.remove(token)
+            account.traQUuid = traQUuid
+            account.clearToken()
+
+            return Result.success(account.player)
+        } ?: return Result.failure(IllegalStateException("Invalid token"))
+    }
+
+    fun link(traQUuid: String, player: OfflinePlayer) {
+        val account = accounts.getOrPut(player.uniqueId) { Account(player) }
+        account.traQUuid = traQUuid
+    }
+
+    fun getTraQUuid(player: OfflinePlayer): String? {
+        return accounts[player.uniqueId]?.traQUuid
+    }
+
+    fun getPlayers(traQUuid: String): List<OfflinePlayer> {
+        return accounts.values.filter { it.traQUuid == traQUuid }.map { it.player }
     }
 }
