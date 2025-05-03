@@ -20,7 +20,7 @@ val hira = listOf(
     'わ', 'を',
 )
 
-class AccountsManager(val accountsFile: File) {
+class AccountsManager(private val accountsFile: File) {
     private val json = Json {
         prettyPrint = true
         isLenient = true

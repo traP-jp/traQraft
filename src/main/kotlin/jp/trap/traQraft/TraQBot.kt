@@ -188,7 +188,7 @@ class TraQBot(
             }
 
             traQChannelIds["chat"] -> {
-                // TODO
+                // TODO: show message in Minecraft
             }
         }
     }

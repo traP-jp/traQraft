@@ -58,4 +58,6 @@ class TraQraftListener(plugin: TraQraft, private val traQChannelIds: Map<String,
                 .append(Component.text("\n\nを送信して、traQ アカウントと連携してください。\n連携が完了したら、再度接続してください。"))
         )
     }
+
+    // TODO: send some events to traQ
 }

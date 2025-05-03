@@ -14,7 +14,7 @@ version = "1.0"
 description = "connect Minecraft with traQ"
 
 val apiVersion = "1.21.4"
-val author = "TwoSquirrels"
+val author = "traP Community"
 val website = "https://github.com/traP-jp/traQraft"
 
 application {
