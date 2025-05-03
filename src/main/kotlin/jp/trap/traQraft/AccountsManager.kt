@@ -1,6 +1,10 @@
 package jp.trap.traQraft
 
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
+import org.bukkit.Bukkit
 import org.bukkit.OfflinePlayer
+import java.io.File
 import java.util.*
 
 val hira = listOf(
@@ -16,7 +20,18 @@ val hira = listOf(
     'わ', 'を',
 )
 
-class AccountsManager {
+class AccountsManager(val accountsFile: File) {
+    private val json = Json {
+        prettyPrint = true
+        isLenient = true
+        allowStructuredMapKeys = true
+        ignoreUnknownKeys = true
+        encodeDefaults = true
+    }
+
+    @Serializable
+    private data class AccountData(val player: String, val traQ: String)
+
     private data class Account(val player: OfflinePlayer, var traQUuid: String? = null) {
         var token: List<Char>? = null
             private set
@@ -40,7 +55,26 @@ class AccountsManager {
     private val accounts = mutableMapOf<UUID, Account>()
     private val tokens = mutableMapOf<List<Char>, Account>()
 
+    private fun loadAccounts(): Boolean {
+        if (!accountsFile.exists()) return false
+        json.decodeFromString<List<AccountData>>(accountsFile.readText()).forEach { (player, traQ) ->
+            val offlinePlayer = Bukkit.getOfflinePlayer(UUID.fromString(player))
+            accounts.getOrPut(offlinePlayer.uniqueId) { Account(offlinePlayer) }.apply {
+                this.traQUuid = traQ
+            }
+        }
+        return true
+    }
+
+    private fun saveAccounts() {
+        accountsFile.writeText(json.encodeToString(accounts.flatMap { (playerUuid, account) ->
+            account.traQUuid?.let { listOf(AccountData(playerUuid.toString(), it)) } ?: emptyList()
+        }))
+    }
+
     init {
+        loadAccounts()
+
         // expired tokens cleaner
         Timer().scheduleAtFixedRate(object : TimerTask() {
             override fun run() {
@@ -78,16 +112,20 @@ class AccountsManager {
             }
 
             tokens.remove(token)
+            loadAccounts()
             account.traQUuid = traQUuid
             account.clearToken()
+            saveAccounts()
 
             return Result.success(account.player)
         } ?: return Result.failure(IllegalStateException("Invalid token"))
     }
 
     fun link(traQUuid: String, player: OfflinePlayer) {
+        loadAccounts()
         val account = accounts.getOrPut(player.uniqueId) { Account(player) }
         account.traQUuid = traQUuid
+        saveAccounts()
     }
 
     fun getTraQUuid(player: OfflinePlayer): String? {

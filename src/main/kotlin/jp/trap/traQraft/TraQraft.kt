@@ -2,6 +2,7 @@ package jp.trap.traQraft
 
 import org.bukkit.Bukkit
 import org.bukkit.plugin.java.JavaPlugin
+import java.io.File
 
 @Suppress("unused")
 class TraQraft : JavaPlugin() {
@@ -26,7 +27,7 @@ class TraQraft : JavaPlugin() {
                 ?: error("traQ.channelIds.chat is not set in config.yml"))
         )
 
-        accountsManager = AccountsManager()
+        accountsManager = AccountsManager(File(dataFolder, "accounts.json"))
         traQBot = TraQBot(
             this,
             traQPort,
