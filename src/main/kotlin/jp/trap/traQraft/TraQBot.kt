@@ -14,9 +14,13 @@ import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.util.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.*
+import org.bukkit.Bukkit
 import java.time.Instant
 import java.util.logging.Logger
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation as ClientContentNegotiation
@@ -45,6 +49,11 @@ object TraQApi {
         val topic: String,
         val name: String,
         //val children: List<String>,
+    )
+
+    @Serializable
+    data class ChannelPath(
+        val path: String,
     )
 }
 
@@ -83,7 +92,11 @@ object TraQEvent {
 }
 
 class TraQBot(
-    plugin: TraQraft, val port: Int, private val verificationToken: String, private val botAccessToken: String
+    private val plugin: TraQraft,
+    val port: Int,
+    private val verificationToken: String,
+    private val botAccessToken: String,
+    private val traQChannelIds: Map<String, String>,
 ) {
     private val logger: Logger = plugin.logger
     private val accountsManager: AccountsManager = plugin.accountsManager
@@ -129,21 +142,55 @@ class TraQBot(
         return Result.success(Unit)
     }
 
-    suspend fun getChannels(includeDm: Boolean = false, path: String? = null): Result<List<TraQApi.Channel>> {
-        val response = client.get("channels") {
-            url {
-                if (includeDm) parameters.append("includeDm", "true")
-                if (path != null) parameters.append("path", path)
-            }
-        }
+    suspend fun getChannel(channelId: String): Result<TraQApi.Channel> {
+        val response = client.get("channels/$channelId")
         if (response.status != HttpStatusCode.OK) {
             return Result.failure(RuntimeException("${response.status}"))
         }
-        return Result.success(response.body<List<TraQApi.Channel>>())
+        return Result.success(response.body<TraQApi.Channel>())
     }
 
-    suspend private fun onMessageCreated(message: TraQEvent.Message) {
-        logger.info("Message created: ${message.plainText} (${message.id})")
+    suspend fun getChannelPath(channelId: String): Result<TraQApi.ChannelPath> {
+        val response = client.get("channels/$channelId/path")
+        if (response.status != HttpStatusCode.OK) {
+            return Result.failure(RuntimeException("${response.status}"))
+        }
+        return Result.success(response.body<TraQApi.ChannelPath>())
+    }
+
+    private suspend fun onMessageCreated(message: TraQEvent.Message) {
+        when (message.channelId) {
+            traQChannelIds["link"] -> {
+                val player = accountsManager.link(message.user.id, message.plainText).onFailure {
+                    postMessage(
+                        message.channelId,
+                        "@${message.user.name}\n\n:no_entry: 合言葉を間違えているか、有効期限切れの可能性があります。再度 Minecraft サーバーに接続することで、新しい合言葉を発行できます。",
+                        true
+                    ).onFailure {
+                        logger.warning("Failed to send message: ${it.message}")
+                    }
+                }.getOrNull() ?: return
+
+                Bukkit.getScheduler().runTask(plugin, Runnable {
+                    player.isWhitelisted = true
+                    logger.info("Linked ${player.name} (${player.uniqueId}) with ${message.user.name} (${message.user.id})")
+
+                    CoroutineScope(Dispatchers.IO).launch {
+                        postMessage(
+                            message.channelId,
+                            "@${message.user.name}\n\n:white_check_mark: Minecraft アカウントと連携しました！\n\nMCID: `${player.name}` (`${player.uniqueId}`)",
+                            true
+                        ).onFailure {
+                            logger.warning("Failed to send message: ${it.message}")
+                        }
+                    }
+                })
+            }
+
+            traQChannelIds["chat"] -> {
+                // TODO
+            }
+        }
     }
 
     private val server = embeddedServer(Netty, port) {
@@ -196,6 +243,15 @@ class TraQBot(
     }
 
     fun run() {
+        // validate traQChannelIds
+        traQChannelIds.forEach { (name, id) ->
+            runBlocking {
+                getChannel(id).onFailure {
+                    throw RuntimeException("Not found channel $name: $id")
+                }
+            }
+        }
+
         server.start(wait = false)
     }
 

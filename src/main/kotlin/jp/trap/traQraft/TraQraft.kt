@@ -19,26 +19,37 @@ class TraQraft : JavaPlugin() {
             config.getString("traQ.verificationToken") ?: error("traQ.verificationToken is not set in config.yml")
         val traQBotAccessToken =
             config.getString("traQ.botAccessToken") ?: error("traQ.botAccessToken is not set in config.yml")
+        val traQChannelIds = mapOf(
+            "link" to (config.getString("traQ.channelIds.link")
+                ?: error("traQ.channelIds.link is not set in config.yml")),
+            "chat" to (config.getString("traQ.channelIds.chat")
+                ?: error("traQ.channelIds.chat is not set in config.yml"))
+        )
 
         accountsManager = AccountsManager()
         traQBot = TraQBot(
             this,
-            port = traQPort,
-            verificationToken = traQVerificationToken,
-            botAccessToken = traQBotAccessToken,
+            traQPort,
+            traQVerificationToken,
+            traQBotAccessToken,
+            traQChannelIds,
         )
-        listener = TraQraftListener(this)
+        listener = TraQraftListener(this, traQChannelIds)
     }
 
     override fun onEnable() {
         traQBot.run()
+        logger.info("traQraft Bot started on port ${traQBot.port}")
+
         Bukkit.getPluginManager().registerEvents(listener, this)
         Bukkit.setWhitelist(true)
+
         logger.info("traQraft Enabled!")
     }
 
     override fun onDisable() {
         traQBot.stop()
+
         logger.info("traQraft Disabled!")
     }
 }
