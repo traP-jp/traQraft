@@ -2,6 +2,9 @@ import org.jetbrains.kotlin.gradle.plugin.getKotlinPluginVersion
 
 plugins {
     kotlin("jvm") version "2.1.20"
+    kotlin("plugin.serialization") version "2.1.20"
+    application
+    id("io.ktor.plugin") version "3.1.2"
     id("com.gradleup.shadow") version "8.3.0"
     id("xyz.jpenilla.run-paper") version "2.3.1"
 }
@@ -11,8 +14,12 @@ version = "1.0"
 description = "connect Minecraft with traQ"
 
 val apiVersion = "1.21.4"
-val author = "TwoSquirrels"
+val author = "traP Community"
 val website = "https://github.com/traP-jp/traQraft"
+
+application {
+    mainClass.set("jp.trap.traQraft.TraQraftKt")
+}
 
 repositories {
     mavenCentral()
@@ -27,6 +34,13 @@ repositories {
 dependencies {
     compileOnly("io.papermc.paper:paper-api:1.21.4-R0.1-SNAPSHOT")
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
+    implementation("io.ktor:ktor-client-core")
+    implementation("io.ktor:ktor-client-cio")
+    implementation("io.ktor:ktor-client-content-negotiation")
+    implementation("io.ktor:ktor-server-core")
+    implementation("io.ktor:ktor-server-netty")
+    implementation("io.ktor:ktor-server-content-negotiation")
+    implementation("io.ktor:ktor-serialization-kotlinx-json")
 }
 
 tasks {
