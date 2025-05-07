@@ -26,7 +26,7 @@ Minecraft アカウントと traQ アカウントを連携できるようにす�
 
 1. traQ BOT を用意します。
     - 動作モードは HTTP にしてください。WebSocket には対応していません。
-    - エンドポイントはポート開放されている必要があります。例えば `traqraft.xgames.jp` というサーバーアドレスで Minecraft サーバーを建てていて `30001` 番をポート解放した場合は、`https://traqraft.xgames.jp:30001/` を指定してください。XServer GAMEs を利用している場合、解放できるポート番号が限られていることに注意してください。
+    - エンドポイントはポート開放されている必要があります。例えば `traqraft.xgames.jp` というサーバーアドレスで Minecraft サーバーを建てていて `30001` 番をポート解放した場合は、`http://traqraft.xgames.jp:30001/` を指定してください。XServer GAMEs を利用している場合、解放できるポート番号が限られていることに注意してください。
     - `MESSAGE_CREATED` イベントを購読してください。
     - 4 で指定するチャンネルに参加させてください。
 2. [最新版の jar ファイルをダウンロード](https://github.com/traP-jp/traQraft/releases/latest) します。
